@@ -3,7 +3,7 @@ import 'package:mechine_task_cumin360/controllers/user_controllers/logout_user_c
 import 'package:mechine_task_cumin360/sources/constants/colors.dart';
 import 'package:mechine_task_cumin360/sources/constants/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mechine_task_cumin360/views/login/login_view.dart'; // Import the LoginView
+
 
 class ProfileViews extends StatefulWidget {
   const ProfileViews({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mechine_task_cumin360/sources/constants/colors.dart';
-import 'package:mechine_task_cumin360/sources/constants/widgets.dart';
+
 
 class ButtonWidget extends StatelessWidget {
   const ButtonWidget({
