@@ -1,51 +1,55 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_mdi_icons/flutter_mdi_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hive/hive.dart';
 import 'package:mechine_task_cumin360/sources/constants/colors.dart';
+import 'package:mechine_task_cumin360/sources/constants/widgets.dart';
+import 'package:mechine_task_cumin360/widgets/button_widget.dart';
 import 'package:mechine_task_cumin360/widgets/text_field_widget.dart';
 import 'package:mechine_task_cumin360/models/feed_post_model.dart';
 
 class FeedsAddingToHome extends StatefulWidget {
   const FeedsAddingToHome({
     super.key,
-    required this.titles,
-    required this.decorations,
-    required this.imageUrls,
-    required this.index,
+    this.titles,
+    this.decorations,
+    this.imageUrls,
+    this.index,
   });
 
-  final String titles;
-  final String decorations;
-  final String imageUrls;
-  final int index;
+  final String? titles;
+  final String? decorations;
+  final String? imageUrls;
+  final int? index;
 
   @override
   State<FeedsAddingToHome> createState() => _FeedsAddingToHomeState();
 }
 
 class _FeedsAddingToHomeState extends State<FeedsAddingToHome> {
-  final TextEditingController _titles = TextEditingController();
-  final TextEditingController _descriptions = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
   final ImagePicker _picker = ImagePicker();
   String? _imagePath;
 
   @override
   void initState() {
     super.initState();
-    _titles.text = widget.titles;
-    _descriptions.text = widget.decorations;
-    _imageUrlController.text = widget.imageUrls;
+    _titleController.text = widget.titles ?? '';
+    _descriptionController.text = widget.decorations ?? '';
+    _imageUrlController.text = widget.imageUrls ?? '';
     _imagePath = widget.imageUrls;
   }
 
   @override
   void dispose() {
-    _titles.dispose();
-    _descriptions.dispose();
+    _titleController.dispose();
+    _descriptionController.dispose();
     _imageUrlController.dispose();
     super.dispose();
   }
@@ -91,18 +95,31 @@ class _FeedsAddingToHomeState extends State<FeedsAddingToHome> {
     );
   }
 
-  void _addNewPost() async {
-    final box = Hive.box<FeedPostModel>('feedPosts');
+  void _saveFeed() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        final box = await Hive.openBox<FeedPostModel>('feedPosts');
+        final newFeed = FeedPostModel(
+          title: _titleController.text,
+          description: _descriptionController.text,
+          imageUrl: _imagePath ?? '',
+          isLiked: false,
+          isSaved: false,
+        );
+        await box.add(newFeed);
 
-    final newPost = FeedPostModel(
-      title: _titles.text,
-      description: _descriptions.text,
-      imageUrl: _imagePath ?? '',
-    );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Feed added successfully')),
+        );
 
-    await box.add(newPost);
-    // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      } catch (e) {
+        print("Error saving feed: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error adding feed')),
+        );
+      }
+    }
   }
 
   @override
@@ -113,74 +130,76 @@ class _FeedsAddingToHomeState extends State<FeedsAddingToHome> {
         title: const Text('Add New Feed'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                GestureDetector(
-                  onTap: _showImageSourceDialog,
-                  child: Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(8),
-                      image: _imagePath != null
-                          ? DecorationImage(
-                              image: FileImage(
-                                File(_imagePath!),
-                              ),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+      body: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(30),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: _showImageSourceDialog,
+                    child: Container(
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                        image: _imagePath != null
+                            ? DecorationImage(
+                                image: FileImage(
+                                  File(_imagePath!),
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _imagePath != null
+                          ? Image.file(File(_imagePath!))
+                          : const Icon(
+                              Mdi.image,
+                              size: 50,
+                              color: grey,
+                            ),
                     ),
-                    child: _imagePath != null
-                        ? Image.file(File(_imagePath!))
-                        : Image.network(
-                            'https://via.placeholder.com/150'),
                   ),
-                ),
-                const SizedBox(height: 20),
-                TextFieldWidget(
-                  userController: _titles,
-                  label: 'Title',
-                  inputType: TextInputType.name,
-                  obscureText: false,
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Please enter a title";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFieldWidget(
-                  userController: _descriptions,
-                  label: 'Description',
-                  inputType: TextInputType.name,
-                  obscureText: false,
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Please enter a Description";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _addNewPost,
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(yellow),
+                  kHight20,
+                  TextFieldWidget(
+                    userController: _titleController,
+                    label: 'Title',
+                    inputType: TextInputType.name,
+                    obscureText: false,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return "Please enter a title";
+                      }
+                      return null;
+                    },
                   ),
-                  child: const Text(
-                    'Add New Feed',
-                    style: TextStyle(color: Colors.white),
+                  kHight20,
+                  TextFieldWidget(
+                    userController: _descriptionController,
+                    label: 'Description',
+                    inputType: TextInputType.name,
+                    obscureText: false,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return "Please enter a Description";
+                      }
+                      return null;
+                    },
                   ),
-                ),
-              ],
+                  kHight30,
+                  ButtonWidget(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height *1/10,
+                    text: 'Add Feed',
+                    onPressed: _saveFeed,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

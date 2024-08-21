@@ -26,7 +26,7 @@ class MainViewsState extends State<MainViews> {
   final List<TabItem> tabItems = List.of([
     TabItem(
       Mdi.homeVariant,
-      "Home",
+      "Feeds",
       yellow,
     ),
     TabItem(
